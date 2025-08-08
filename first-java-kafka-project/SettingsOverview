@@ -1,53 +1,103 @@
-Simple file where I noted some important properties while defining consumers and producers with Kafka
-
-PRODUCER ->
-
-Kafka Defaults since version 3.0 ->
-
+Kafka Producer — Important Properties & Concepts
+Kafka Defaults since version 3.0
 acks = all
+
 enable.idempotence = true
 
-With 2.8 version or lower
+Kafka 2.8 or lower defaults
 acks = 1
+
 enable.idempotence = false
 
-ACK = 0 -> Producer doesn't wait for any ack ( Possible data loss )
-ACK = 1 -> Producer waits for ack from the leader ( Limited data loss )
-ACK = All or -1 -> Producer waits for ack from the leader and replicas ( No data loss )
+Meaning of acks values
+acks Value	Description	Data Loss Risk
+0	Producer does not wait for any acknowledgment (ACK)	Possible data loss
+1	Producer waits for ACK from the leader only	Limited data loss
+all / -1	Producer waits for ACK from leader and all in-sync replicas	No data loss
 
-In terms of efficiency the more time you need to ack every leader or producer the less efficient it is.
-But of course comes at a cost of data loss.
-ACK = 1 was the default, acks == all or -1 is the new default
+More acknowledgments mean safer delivery but less efficiency (higher latency).
 
-ISR -> In Sync replicas, used when the replication factor is greater than 0
-ISR get shared over different brokers in case of errors while consuming certain messages, if one broker doesn't ack
-another broker that has that ISR of that message can ACK.
+ISR (In-Sync Replicas)
+ISR is the set of replicas fully caught up with the leader.
 
-min.insync.replicas=1, only the broker leader needs to successfully ack
-min.insync.replicas=2, at least the broker leader and one replica needs to ack (Safest)
+Used when replication factor > 1.
 
-There are producer retries in case there is a transient failure. There are some properties you can define to customize
-this in order to suit a consumer the best.
+When a broker in ISR fails to ACK, others may still ACK to keep consistency.
 
-Old version of Kafka -> in retries the messages will be sent out of order
-There are some properties to fix this behaviour as well.
+min.insync.replicas controls the minimum ISR members required for a successful write:
 
-Idempotent Producer - They are the default in new versions of Kafka (3.0)
+min.insync.replicas=1: only leader needs to ACK (faster, less safe).
 
-Producer sends message to Kafka; Kafka sends ack but a network error for example occurs;
-Producer sends another message (Retries); Kafka doesn't take the message but tries to send the ack again.
-Retries at set to max with this producer and ack = all
+min.insync.replicas=2: leader + at least one replica must ACK (safer).
 
-producerProps.put("enable.idempotence", "true") if they are not set
+Retries & Ordering
+Older Kafka versions could reorder messages during retries.
 
-Compression at producer level is more efficient the bigger the batches you are trying to compress.
-The type of compression can also be change in the properties
+With idempotent producers (enable.idempotence=true), retries preserve message order and avoid duplicates.
 
-Sticky partioners are more efficient and are the default for newer versions of Kafka.
+Idempotent Producer
+Enabled by default since Kafka 3.0.
 
+Guarantees exactly-once delivery per partition even with retries.
 
+Compression
+More efficient with larger batch sizes.
 
-CONSUMER ->
+Compression type (e.g., gzip, snappy, lz4, zstd) can be configured.
 
+Partitioning
+Sticky partitioners (default in new Kafka versions) assign batches to the same partition, improving compression and throughput.
 
+Kafka Consumer — Important Properties & Concepts
+Group Management
+Consumers belong to a consumer group identified by group.id.
 
+Kafka ensures each partition in a topic is consumed by only one consumer within the group.
+
+Offset Management
+Offsets track the position of the consumer in each partition.
+
+Auto-commit options:
+
+Property	Description	Default
+enable.auto.commit	Automatically commit offsets periodically	true
+auto.commit.interval.ms	Interval between auto commits (if enabled)	5000 ms
+auto.offset.reset	What to do when there’s no committed offset	latest
+
+auto.offset.reset options:
+
+latest: start consuming from the latest message (default).
+
+earliest: start from the earliest available message.
+
+none: throw error if no offset is found.
+
+Session and Heartbeat
+session.timeout.ms: max time before a consumer is considered dead if no heartbeat.
+
+heartbeat.interval.ms: frequency of heartbeat messages to broker.
+
+Polling
+Consumers poll messages using poll(Duration) API.
+
+Poll frequency should be less than max.poll.interval.ms to avoid consumer group rebalance.
+
+Deserialization
+Configure key and value deserializers (key.deserializer, value.deserializer), e.g., StringDeserializer, ByteArrayDeserializer.
+
+Max Poll Records
+max.poll.records: max number of records returned per poll (default 500).
+
+Useful for controlling batch sizes.
+
+Rebalance and Partition Assignment Strategies
+Controls how partitions are distributed across consumers in a group. Examples:
+
+RangeAssignor
+
+RoundRobinAssignor
+
+StickyAssignor (default, keeps partitions sticky to consumers for stability)
+
+Manual Offset Control
+If enable.auto.commit=false, offsets must be committed manually using commitSync() or commitAsync().

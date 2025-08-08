@@ -1,0 +1,45 @@
+Kafka Producer - Ideias Principais
+
+1. Configurar propriedades principais:
+   - bootstrap.servers (endereço do broker)
+   - key.serializer e value.serializer
+   - acks = all (para garantir durabilidade)
+   - enable.idempotence = true (evita duplicação nas retries)
+   - retries configurados para garantir reenvio automático
+
+2. Criar KafkaProducer com as propriedades
+
+3. Construir mensagens (ProducerRecord) com tópico, chave e valor
+
+4. Enviar mensagens:
+   - Usar producer.send(record) com callback para tratar sucesso/falha
+   - Opcional: flush() para garantir envio imediato
+
+5. Fechar producer no fim (producer.close())
+
+------------------------------------------------------/------------------------------------------------------
+
+Kafka Consumer - Ideias Principais
+
+1. Configurar propriedades principais:
+   - bootstrap.servers
+   - group.id (identificador do grupo consumidor)
+   - key.deserializer e value.deserializer
+   - auto.offset.reset (earliest ou latest)
+   - enable.auto.commit (true/false dependendo da estratégia de commits)
+
+2. Criar KafkaConsumer com as propriedades
+
+3. Subscrever a(s) topic(s) com consumer.subscribe(listaDeTopicos)
+
+4. Loop infinito para consumir mensagens:
+   - consumer.poll(timeout) para buscar mensagens do tópico
+   - iterar sobre os registros recebidos e processá-los
+
+5. (Opcional) Gerir offsets manualmente ou usar commit automático
+
+6. Definir um shutdown hook para:
+   - sinalizar o fim do loop de consumo
+   - fechar consumer com consumer.close()
+
+7. Garantir que o consumidor fecha corretamente para evitar perda de offsets

@@ -12,6 +12,15 @@
             <option value="$PROJECT_DIR$/kafka-basics" />
             <option value="$PROJECT_DIR$/kafka-consumer-opensearch" />
             <option value="$PROJECT_DIR$/kafka-producer-wikimedia" />
+            <option value="$PROJECT_DIR$/kafka-streams-wikimedia" />
+          </set>
+        </option>
+      </GradleProjectSettings>
+      <GradleProjectSettings>
+        <option name="externalProjectPath" value="$PROJECT_DIR$/kafka-streams-wikimedia" />
+        <option name="modules">
+          <set>
+            <option value="$PROJECT_DIR$/kafka-streams-wikimedia" />
           </set>
         </option>
       </GradleProjectSettings>

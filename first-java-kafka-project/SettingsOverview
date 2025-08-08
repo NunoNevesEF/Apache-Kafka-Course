@@ -1,0 +1,53 @@
+Simple file where I noted some important properties while defining consumers and producers with Kafka
+
+PRODUCER ->
+
+Kafka Defaults since version 3.0 ->
+
+acks = all
+enable.idempotence = true
+
+With 2.8 version or lower
+acks = 1
+enable.idempotence = false
+
+ACK = 0 -> Producer doesn't wait for any ack ( Possible data loss )
+ACK = 1 -> Producer waits for ack from the leader ( Limited data loss )
+ACK = All or -1 -> Producer waits for ack from the leader and replicas ( No data loss )
+
+In terms of efficiency the more time you need to ack every leader or producer the less efficient it is.
+But of course comes at a cost of data loss.
+ACK = 1 was the default, acks == all or -1 is the new default
+
+ISR -> In Sync replicas, used when the replication factor is greater than 0
+ISR get shared over different brokers in case of errors while consuming certain messages, if one broker doesn't ack
+another broker that has that ISR of that message can ACK.
+
+min.insync.replicas=1, only the broker leader needs to successfully ack
+min.insync.replicas=2, at least the broker leader and one replica needs to ack (Safest)
+
+There are producer retries in case there is a transient failure. There are some properties you can define to customize
+this in order to suit a consumer the best.
+
+Old version of Kafka -> in retries the messages will be sent out of order
+There are some properties to fix this behaviour as well.
+
+Idempotent Producer - They are the default in new versions of Kafka (3.0)
+
+Producer sends message to Kafka; Kafka sends ack but a network error for example occurs;
+Producer sends another message (Retries); Kafka doesn't take the message but tries to send the ack again.
+Retries at set to max with this producer and ack = all
+
+producerProps.put("enable.idempotence", "true") if they are not set
+
+Compression at producer level is more efficient the bigger the batches you are trying to compress.
+The type of compression can also be change in the properties
+
+Sticky partioners are more efficient and are the default for newer versions of Kafka.
+
+
+
+CONSUMER ->
+
+
+
